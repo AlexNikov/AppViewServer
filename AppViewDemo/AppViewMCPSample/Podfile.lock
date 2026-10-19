@@ -1,0 +1,21 @@
+PODS:
+  - AppViewServer/MCP (1.2.8):
+    - AppViewServer/Swift
+  - AppViewServer/Server (1.2.8)
+  - AppViewServer/Swift (1.2.8):
+    - AppViewServer/Server
+
+DEPENDENCIES:
+  - AppViewServer/MCP (from `../../`)
+  - AppViewServer/Swift (from `../../`)
+
+EXTERNAL SOURCES:
+  AppViewServer:
+    :path: "../../"
+
+SPEC CHECKSUMS:
+  AppViewServer: 54d74e4b0878ee7864d45b3801b0c2a8932a0fe1
+
+PODFILE CHECKSUM: 8d1136fa5e8699b574a6bff201cedd8c6723ee0e
+
+COCOAPODS: 1.16.2

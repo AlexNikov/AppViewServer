@@ -1,0 +1,8 @@
+platform :ios, '16.0'
+use_frameworks!
+
+load File.expand_path('../../cocoapods/install.rb', __dir__)
+
+target 'AppViewMCPSample' do
+  install_appview_server_pods!(path: '../../', subspecs: ['Swift', 'MCP'])
+end

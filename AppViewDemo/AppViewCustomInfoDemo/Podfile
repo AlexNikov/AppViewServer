@@ -1,0 +1,10 @@
+platform :ios, '17.0'
+use_frameworks!
+
+install! 'cocoapods', :warn_for_unused_master_specs_repo => false
+
+load File.expand_path('../../cocoapods/install.rb', __dir__)
+
+target 'AppViewCustomInfoDemo' do
+  install_appview_server_pods!(path: '../../', subspecs: ['Swift', 'MCP'])
+end

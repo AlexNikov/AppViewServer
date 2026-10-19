@@ -1,0 +1,103 @@
+#if canImport(AppViewShared)
+import AppViewShared
+#endif
+#if SHOULD_COMPILE_APPVIEW_SERVER
+
+//
+//  AVS_TraceManager+Extension.swift
+//  AppViewServer
+//
+//  Maintained by Cursor Agent.
+//
+
+import Foundation
+import UIKit
+
+public class AVS_SwiftTraceManager: NSObject {
+    @objc public static func swiftMarkIVars(ofObject hostObject: AnyObject) {
+        var mirror: Mirror? = Mirror(reflecting: hostObject)
+        var currClass: AnyClass? = type(of: hostObject)
+        let initialInClass: AnyClass? = currClass
+        
+        let hostView = hostObject as? UIView
+
+        while let m = mirror, let unwrappedCurrClass = currClass {
+            let hostDisplayClassName = makeDisplayClassName(superClass: unwrappedCurrClass, childClass: initialInClass)
+            m.children.forEach { child in
+                if let child = child as? (label: String?, value: NSObject) {
+                    let label: String? = child.label?.replacingOccurrences(of: "$__lazy_storage_$_", with: "")
+                    let value = child.value
+
+                    guard (value is UIView) || (value is CALayer) || (value is UIViewController) || (value is UIGestureRecognizer) else {
+                        return
+                    }
+
+                    guard let label = label, label.count > 0 else {
+                        return
+                    }
+
+                    var ivarTrace = AppViewIvarTrace()
+                    ivarTrace.hostClassName = hostDisplayClassName
+                    ivarTrace.ivarName = label
+
+                    if value === hostObject {
+                        ivarTrace.relation = appviewIvarTraceRelationValueSelf
+                    } else if let hostView {
+                        var ivarLayer: CALayer?
+                        if let layer = value as? CALayer {
+                            ivarLayer = layer
+                        } else if let view = value as? UIView {
+                            ivarLayer = view.layer
+                        }
+                        if let layer = ivarLayer, layer.superlayer === hostView.layer {
+                            ivarTrace.relation = "superview"
+                        }
+                    }
+                    value.avs_ivarTraces = (value.avs_ivarTraces ?? []) + [ivarTrace]
+                }
+            }
+            mirror = m.superclassMirror
+            currClass = unwrappedCurrClass.superclass()
+        }
+    }
+    
+    // e.g. superClass may be UIView while childClass may be UIButton
+    private static func makeDisplayClassName(superClass: AnyClass, childClass: AnyClass?) -> String {
+        let superName = NSStringFromClass(superClass)
+        
+        guard let childClass = childClass else {
+            return superName
+        }
+        let childName = NSStringFromClass(childClass)
+        if superName == childName {
+            return superName
+        }
+        let superModule = queryModuleName(classname: superName)
+        let childModule = queryModuleName(classname: childName)
+        if superModule != nil, superModule == childModule {
+            let shortSuperName = queryShortName(classname: superName)
+            // ( UIKit.UIButton : UIView *)
+            return "\(childName) : \(shortSuperName)"
+        }
+        return "\(childName) : \(superName)"
+    }
+    
+    private static func queryModuleName(classname: String) -> String? {
+        let parts = classname.components(separatedBy: ".")
+        if parts.count != 2 {
+            return nil
+        }
+        return parts[0]
+    }
+    
+    /// Excludes module name
+    private static func queryShortName(classname: String) -> String {
+        let parts = classname.components(separatedBy: ".")
+        if parts.count != 2 {
+            return classname
+        }
+        return parts[1]
+    }
+}
+
+#endif /* SHOULD_COMPILE_APPVIEW_SERVER */
